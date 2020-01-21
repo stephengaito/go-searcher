@@ -1,0 +1,28 @@
+// This is the searcher configuration json file (with comments)
+
+{
+  // we need to specify the path to the database
+  "DatabasePath": "sillySearcher.db"
+  // we need to specify where to look for new / updated files
+  "HtmlDir": "_site"
+  // we need to specify where to remap the file to url
+  "UrlBase": ""
+
+  // We specify how the indexer will work...
+  "Indexer": {
+    // we need to specify the indexer sleep time (in seconds)
+    "SleepSeconds": 60
+    // we need to specify how many files to remove in a indexer batch
+    "RemoveBatch": 2000
+    // we need to specify how many files to add or update in a indexer batch
+    "AddUpdateBatch": 2000
+  }
+
+  // We specify how the webserver will work...
+  "Webserver": {
+    // how many results will we search for?
+    "MaxNumResults": 100
+    // where is our searchForm.html template located?
+    "SearchFrom": "searchForm.html"
+  }
+}

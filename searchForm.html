@@ -1,0 +1,40 @@
+<html><head><title>Test search form</title>
+<body>
+  <div id="login">
+    <form action="/search/" method="post" id="search-form">
+      Query:
+      <input
+        type="text"
+        name="searchQueryStr"
+        size="80"
+        autocomplete="on"
+        autofocus
+        value="{{.Query}}"
+       />
+      <select name="searchQueryNum">
+        {{ $maxNum := .MaxNum }}
+        {{ range $value := .MaxNumRange }}
+        <option
+          value="{{$value}}"
+          {{ if eq $value $maxNum }}selected{{end}}
+       >{{$value}}</option>
+        {{ end }}
+      </select>
+      <input type="submit" value="Search" />
+    </form>
+  </div>
+  <hr>
+  <ol>
+    {{ range .Results }}
+    <li class="search-result-index">
+      <span class="search-result-rank">{{.Rank}}</span>
+      {{ .Type }}
+      <a class="search-result-link" href="{{.FilePath}}">{{.Title}}</a>
+    </li>
+    {{ end }}
+  </ol>
+  <hr>
+  <p>{{ len .Results }} matches found.</p>
+  <p style="color:grey">Query: [{{ .Query }}]</p>
+</body>
+</html>
