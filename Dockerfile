@@ -17,7 +17,10 @@ RUN go build
 FROM alpine
 RUN apk add --no-cache --update ca-certificates sqlite
 
-RUN mkdir /searcher
+RUN mkdir -p /searcher/config
+RUN mkdir -p /searcher/files
+RUN mkdir -p /searcher/data
+
 COPY --from=build /go/searcher/searcher               /searcher
 COPY --from=build /go/searcher/config/searchForm.html /searcher/config
 
