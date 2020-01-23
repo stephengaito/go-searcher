@@ -26,4 +26,4 @@ COPY --from=build /go/searcher/config/searchForm.html /searcher/config
 
 EXPOSE 8080
 WORKDIR /searcher
-ENTRYPOINT ["/searcher/searcher -l /tmp/searcher.log"]
+ENTRYPOINT ["/searcher/searcher", "-l", "/tmp/searcher.log"]
