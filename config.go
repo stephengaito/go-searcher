@@ -160,7 +160,7 @@ func getConfigAStr(configVarPath string, aDefault []string) []string {
   gValue := getConfigVar(configVarPath)
   theValue := aDefault
   if gValue.Exists() {
-    someValues = gValue.Array()
+    someValues := gValue.Array()
     theValue = make([]string, 0)
     for _, aStrValue := range someValues {
       theValue = append(theValue, aStrValue.String())
