@@ -143,6 +143,19 @@ func getConfigStr(configVarPath string, aDefault string) string {
   return theValue
 }
 
+func getConfigAStr(configVarPath string, aDefault []string) string {
+  gValue := getConfigVar(configVarPath)
+  theValue := aDefault
+  if gValue.Exists() {
+    someValues = gValue.Array()
+    theValue = make([]string)
+    for aStrValue := range someValues {
+      append(theValue, aStrValue.String())
+    }
+  }
+  return theValue
+}
+
 func getConfigBool(configVarPath string, aDefault bool) bool {
   gValue := getConfigVar(configVarPath)
   theValue := aDefault

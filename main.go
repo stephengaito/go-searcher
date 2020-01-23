@@ -12,10 +12,10 @@ import (
 
 func main() {
   configFilePath := flag.String(
-    "c", "searcher.jsonc", "The searcher configuration file",
+    "c", "/searcher/config/searcher.jsonc", "The searcher configuration file",
   )
   logFilePath := flag.String(
-    "l", "stderr", "The searcjer log file path",
+    "l", "/tmp/searcher.log", "The searcher log file path",
   )
 
   flag.Parse()
