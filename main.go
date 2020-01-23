@@ -15,7 +15,7 @@ func main() {
     "c", "/searcher/config/searcher.jsonc", "The searcher configuration file",
   )
   logFilePath := flag.String(
-    "l", "/tmp/searcher.log", "The searcher log file path",
+    "l", "stderr", "The searcher log file path",
   )
 
   flag.Parse()

@@ -48,14 +48,14 @@ type SearchData struct {
 
 func runWebServer() {
 
-  htmlDir := getConfigStr("HtmlDir", "html")
-  urlBase := getConfigStr("UrlBase", "")
+  htmlDirs := getConfigAStr("HtmlDirs", [ "files" ])
+  urlBase  := getConfigStr("UrlBase", "")
 
   searchForm := CreateTemplate(
-    getConfigStr("Webserver.SearchForm", "searchForm.html"),
+    getConfigStr("Webserver.SearchForm", "config/searchForm.html"),
   )
 
-  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
+  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", "data/searcher.db"))
   WebserverMaybeFatal("trying to open the database", err)
   defer searchDB.Close()
 
@@ -105,7 +105,12 @@ func runWebServer() {
         err = rows.Scan(&filePath, &title, &rank)
         WebserverMaybeError("scanning filePath and title from results", err)
         if _, err = os.Stat(filePath); err != nil { continue }
-        results[numResults].FilePath = strings.Replace(filePath, htmlDir, urlBase, 1)
+        for anHtmlDir := range htmlDirs {
+          if strings.HasPrefix(filePath, anHtmlDir) {
+            results[numResults].FilePath =
+              strings.Replace(filePath, htmlDir, urlBase, 1)
+          }
+        }
         results[numResults].Title    = title
         results[numResults].Rank     = strconv.FormatFloat(-1 * rank, 'f', 2, 64)
         var resultType string

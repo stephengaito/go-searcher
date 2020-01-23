@@ -18,8 +18,8 @@ FROM alpine
 RUN apk add --no-cache --update ca-certificates sqlite
 
 RUN mkdir /searcher
-COPY --from=build /go/searcher/searcher        /searcher
-COPY --from=build /go/searcher/searchForm.html /searcher
+COPY --from=build /go/searcher/searcher               /searcher
+COPY --from=build /go/searcher/config/searchForm.html /searcher/config
 
 EXPOSE 8080
 WORKDIR /searcher
