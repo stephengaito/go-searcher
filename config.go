@@ -104,7 +104,7 @@ func reloadConfigFile() {
   gValue := gjson.Get(searcherConfig, "DatabasePath")
   if ! gValue.Exists() {
     tmpSearcherConfig, err := sjson.Set(
-      searcherConfig, "DatabasePath", "searcher.db",
+      searcherConfig, "DatabasePath", "data/searcher.db",
     )
     if err == nil {
       searcherConfig = tmpSearcherConfig
@@ -115,7 +115,20 @@ func reloadConfigFile() {
       )
     }
   }
-
+  gValue = gjson.Get(searcherConfig, "HtmlDirs")
+  if ! gValue.Exists() {
+    tmpSearcherConfig, err := sjson.Set(
+      searcherConfig, "HtmlDirs", "[ \"files\" ]",
+    }
+    if err == nil {
+      searcherConfig = tmpSearcherConfig
+    } else {
+      log.Fatalf(
+"Searcher(fatal): Failed to SET configuration value HtmlDirs when required ERROR: %s",
+        err,
+      )
+    }
+  }
   log.Printf(
     "Searcher: configuration: [%s]\n[%s]", configFilePath, searcherConfig,
   )

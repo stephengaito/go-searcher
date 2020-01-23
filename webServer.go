@@ -55,7 +55,7 @@ func runWebServer() {
     getConfigStr("Webserver.SearchForm", "config/searchForm.html"),
   )
 
-  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", "data/searcher.db"))
+  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
   WebserverMaybeFatal("trying to open the database", err)
   defer searchDB.Close()
 

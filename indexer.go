@@ -42,11 +42,11 @@ func initDatabaseStructure() {
   //
   // Only initialize the database if it does not already exist...
   //
-  if _, err := os.Stat(getConfigStr("DatabasePath", "data/searcher.db")); os.IsNotExist(err) {
+  if _, err := os.Stat(getConfigStr("DatabasePath", "")); os.IsNotExist(err) {
     //
     // If it does not exist... try to create it...
     //
-    if searcherFile, err := os.Create(getConfigStr("DatabasePath", "data/searcher.db"));  err != nil {
+    if searcherFile, err := os.Create(getConfigStr("DatabasePath", ""));  err != nil {
       IndexerMaybeFatal("could not create database file", err)
     } else {
       searcherFile.Close()
@@ -55,7 +55,7 @@ func initDatabaseStructure() {
     // We have been able to create the database so...
     // ... create the tables we need...
     //
-    searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", "data/searcher.db"))
+    searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
     IndexerMaybeFatal("could not open database file to initialize tables", err)
     defer searchDB.Close()
 
@@ -307,7 +307,7 @@ func indexFiles() {
   //
   // Begin by opening the database
   //
-  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", "data/searcher.db"))
+  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
   IndexerMaybeFatal("could not open database", err)
   defer searchDB.Close()
   //
