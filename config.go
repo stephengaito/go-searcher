@@ -119,7 +119,7 @@ func reloadConfigFile() {
   if ! gValue.Exists() {
     tmpSearcherConfig, err := sjson.Set(
       searcherConfig, "HtmlDirs", "[ \"files\" ]",
-    }
+    )
     if err == nil {
       searcherConfig = tmpSearcherConfig
     } else {
@@ -156,14 +156,14 @@ func getConfigStr(configVarPath string, aDefault string) string {
   return theValue
 }
 
-func getConfigAStr(configVarPath string, aDefault []string) string {
+func getConfigAStr(configVarPath string, aDefault []string) []string {
   gValue := getConfigVar(configVarPath)
   theValue := aDefault
   if gValue.Exists() {
     someValues = gValue.Array()
-    theValue = make([]string)
-    for aStrValue := range someValues {
-      append(theValue, aStrValue.String())
+    theValue = make([]string, 0)
+    for _, aStrValue := range someValues {
+      theValue = append(theValue, aStrValue.String())
     }
   }
   return theValue

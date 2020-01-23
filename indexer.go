@@ -162,8 +162,8 @@ func lookForNewFiles(searchDB *sqlite3.Conn) {
   //
   // walk the html files looking for new or changed files...
   //
-  htmlDirs := getConfigAStr("HtmlDirs", [ "files" ])
-  for anHtmlDir := range htmlDir {
+  htmlDirs := getConfigAStr("HtmlDirs", []string{ "files" })
+  for _, anHtmlDir := range htmlDirs {
     filepath.Walk(anHtmlDir,func (path string, info os.FileInfo, err error) error {
       if maxInsertions <= numInsertions {
         return nil

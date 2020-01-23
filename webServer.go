@@ -48,7 +48,7 @@ type SearchData struct {
 
 func runWebServer() {
 
-  htmlDirs := getConfigAStr("HtmlDirs", [ "files" ])
+  htmlDirs := getConfigAStr("HtmlDirs", []string{ "files" })
   urlBase  := getConfigStr("UrlBase", "")
 
   searchForm := CreateTemplate(
@@ -105,10 +105,10 @@ func runWebServer() {
         err = rows.Scan(&filePath, &title, &rank)
         WebserverMaybeError("scanning filePath and title from results", err)
         if _, err = os.Stat(filePath); err != nil { continue }
-        for anHtmlDir := range htmlDirs {
+        for _, anHtmlDir := range htmlDirs {
           if strings.HasPrefix(filePath, anHtmlDir) {
             results[numResults].FilePath =
-              strings.Replace(filePath, htmlDir, urlBase, 1)
+              strings.Replace(filePath, anHtmlDir, urlBase, 1)
           }
         }
         results[numResults].Title    = title
