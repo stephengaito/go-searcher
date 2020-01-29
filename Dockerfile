@@ -26,4 +26,9 @@ COPY --from=build /go/searcher/config/searchForm.html /searcher/config
 
 EXPOSE 8080
 WORKDIR /searcher
+
+# NOTE: if there are problems starting swap the comments on the next two 
+# lines to allow you to view the searcher logfiles from the host...
+#
+#ENTRYPOINT ["/searcher/searcher", "-l", "/searcher/data/searcher.log"]
 ENTRYPOINT ["/searcher/searcher", "-l", "/tmp/searcher.log"]
