@@ -27,5 +27,5 @@ WORKDIR /searcher
 # NOTE: if there are problems starting swap the comments on the next two
 # lines to allow you to view the searcher logfiles from the host...
 #
-#ENTRYPOINT ["/searcher/searcher", "-l", "/searcher/data/searcher.log"]
-ENTRYPOINT ["/searcher/searcher", "-l", "/tmp/searcher.log"]
+#ENTRYPOINT ["/searcher/go-searcher", "-l", "/searcher/data/searcher.log"]
+ENTRYPOINT ["/searcher/go-searcher", "-l", "/tmp/searcher.log"]
