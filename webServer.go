@@ -9,7 +9,8 @@ import (
   "strconv"
   "net/url"
   "net/http"
-  "github.com/bvinc/go-sqlite-lite/sqlite3"
+  "database/sql"
+  _ "github.com/mattn/go-sqlite3"
 )
 
 func WebserverMaybeFatal(logMessage string, err error) {
@@ -55,7 +56,7 @@ func runWebServer() {
     getConfigStr("Webserver.SearchForm", "config/searchForm.html"),
   )
 
-  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
+  searchDB, err := sql.Open("sqlite3", getConfigStr("DatabasePath", ""))
   WebserverMaybeFatal("trying to open the database", err)
   defer searchDB.Close()
 
@@ -89,16 +90,19 @@ func runWebServer() {
       results := make([]SearchResults, maxNum)
       sqlCmd := "select filePath, fileTitle, bm25(pageSearch) from pageSearch('"+sqlQuery+"') order by rank;"
       WebserverLogf("sqlCmdQuery: [%s]", sqlCmd)
-      rows, err := searchDB.Prepare(sqlCmd)
+      rows, err := searchDB.Query(sqlCmd)
       WebserverMaybeError("trying to search pageSearch table with query", err)
       defer rows.Close()
       //
       numResults := 0
       for {
         if maxNum <= numResults { break }
-        hasRow, err := rows.Step()
-        WebserverMaybeError("could not step into next row", err)
-        if  !hasRow { break }
+        hasRow := rows.Next()
+        if  !hasRow {
+          err := rows.Err()
+          WebserverMaybeError("could not step into next row", err)
+          break
+        }
         var filePath string
         var title    string
         var rank     float64

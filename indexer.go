@@ -2,7 +2,6 @@ package main
 
 // For rss/Atom feeds use: https://github.com/mmcdole/gofeed
 
-
 import (
   "os"
   "log"
@@ -12,7 +11,8 @@ import (
   "strings"
   "path/filepath"
   "math/rand"
-  "github.com/bvinc/go-sqlite-lite/sqlite3"
+  "database/sql"
+  _ "github.com/mattn/go-sqlite3"
   "github.com/grokify/html-strip-tags-go"
 )
 
@@ -36,11 +36,11 @@ func IndexerLogf(logFormat string, v ...interface{}) {
   log.Printf("Indexer(info): "+logFormat, v...)
 }
 
-// Conditionally initialize the database structure
+// Conditionally initialise the database structure
 //
 func initDatabaseStructure() {
   //
-  // Only initialize the database if it does not already exist...
+  // Only initialise the database if it does not already exist...
   //
   if _, err := os.Stat(getConfigStr("DatabasePath", "")); os.IsNotExist(err) {
     //
@@ -55,11 +55,11 @@ func initDatabaseStructure() {
     // We have been able to create the database so...
     // ... create the tables we need...
     //
-    searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
+    searchDB, err := sql.Open("sqlite3", getConfigStr("DatabasePath", ""))
     IndexerMaybeFatal("could not open database file to initialize tables", err)
     defer searchDB.Close()
 
-    err = searchDB.Exec(`
+    _, err = searchDB.Exec(`
       create table fileInfo (
         filePath  text not null primary key,
         fileMTime int,
@@ -68,12 +68,12 @@ func initDatabaseStructure() {
     `)
     IndexerMaybeFatal("could not create fileInfo table", err)
 
-    err = searchDB.Exec(`
+    _, err = searchDB.Exec(`
       create index filePaths ON fileInfo(filePath);
     `)
     IndexerMaybeFatal("could not create filePaths index", err)
 
-    err = searchDB.Exec(`
+    _, err = searchDB.Exec(`
       create virtual table pageSearch using fts5(
         filePath,
         fileTitle,
@@ -84,7 +84,7 @@ func initDatabaseStructure() {
   }
 }
 
-func removeMissingFiles(searchDB *sqlite3.Conn) {
+func removeMissingFiles(searchDB *sql.DB) {
   maxDeletions := getConfigInt("Indexer.RemoveBatch", 200)
   numDeletions := int64(0)
   var filesToDelete []string = make([]string, maxDeletions)
@@ -94,16 +94,19 @@ func removeMissingFiles(searchDB *sqlite3.Conn) {
   // look for files which are in fileInfo database...
   // ... but no longer exist... (store them for later deletion)
   //
-  rows, err := searchDB.Prepare("select filePath from fileInfo")
+  rows, err := searchDB.Query("select filePath from fileInfo")
   IndexerMaybeError("selecting filePaths from fileInfo", err)
   defer rows.Close()
   //
-  for { 
+  for {
     if maxDeletions <= numDeletions { break }
     //
-    hasRow, err := rows.Step()
-    IndexerMaybeError("trying to step to next row", err)
-    if !hasRow { break }
+    hasRow := rows.Next()
+    if !hasRow {
+      err := rows.Err()
+      IndexerMaybeError("trying to step to next row", err)
+      break
+    }
     //
     var fullPath string
     err = rows.Scan(&fullPath)
@@ -114,29 +117,29 @@ func removeMissingFiles(searchDB *sqlite3.Conn) {
   }
   rows.Close()
 
-  // Now acutally delete the files from the database
+  // Now actually delete the files from the database
   //
   for i := int64(0); i < numDeletions; i++ {
     aFile := filesToDelete[i]
     IndexerLogf("deleting(%d): [%s]", i, aFile)
-    err = searchDB.Begin()
+    transaction, err := searchDB.Begin()
     if err != nil {
       IndexerMaybeError("could not start deletion transaction", err)
       break
     }
-    err = searchDB.Exec("delete from fileInfo where filePath = ?", aFile)
+    _, err = transaction.Exec("delete from fileInfo where filePath = ?", aFile)
     if err != nil {
       IndexerMaybeError("deleting from fileInfo", err)
-      searchDB.Rollback()
+      transaction.Rollback()
       break
     }
-    err = searchDB.Exec("delete from pageSearch where filePath = ?", aFile)
+    _, err = transaction.Exec("delete from pageSearch where filePath = ?", aFile)
     if err != nil {
       IndexerMaybeError("deleting from pageSearch", err)
-      searchDB.Rollback()
+      transaction.Rollback()
       break
     }
-    err = searchDB.Commit()
+    err = transaction.Commit()
     if err != nil {
       IndexerMaybeError("could not commit deletion transaction", err)
       break
@@ -153,7 +156,7 @@ func removeMissingFiles(searchDB *sqlite3.Conn) {
   IndexerLogf("removed %d missing files", numDeletions)
 }
 
-func lookForNewFiles(searchDB *sqlite3.Conn) {
+func lookForNewFiles(searchDB *sql.DB) {
   maxInsertions := getConfigInt("Indexer.AddUpdateBatch", 200)
   numInsertions := int64(0)
   titleRegexp   := regexp.MustCompile(`<meta name="pageTitle" content="(.*?)">`)
@@ -182,14 +185,16 @@ func lookForNewFiles(searchDB *sqlite3.Conn) {
       var filePath  string = ""
       var pageMTime int64  = 0
       var pageSize  int64  = 0
-      rows, err := searchDB.Prepare(`
+      rows, err := searchDB.Query(`
         select * from fileInfo where filePath == ? ;
       `, path)
       IndexerMaybeError("looking for new files in fileInfo", err)
-      hasRows, err := rows.Step()
-      IndexerMaybeError("looking for first result from files in fileInfo", err)
+      hasRows := rows.Next()
       if hasRows {
         rows.Scan(&filePath, &pageMTime, &pageSize)
+      } else {
+        err := rows.Err()
+        IndexerMaybeError("looking for first result from files in fileInfo", err)
       }
       rows.Close()
       //
@@ -236,28 +241,28 @@ func lookForNewFiles(searchDB *sqlite3.Conn) {
         // this file has not yet been indexed... so insert it...
         //
         IndexerLogf("INSERTING: [%s][%s]", path, fileTitle)
-        err := searchDB.Begin()
+        transaction, err := searchDB.Begin()
         if err != nil {
           IndexerMaybeError("could not start insertions transaction", err)
           return nil
         }
-        err = searchDB.Exec(`
+        _, err = transaction.Exec(`
           insert into fileInfo ( filePath, fileMTime, fileSize ) values ( ?, ?, ?)
         `, path, fileInfo.ModTime().Unix(), fileInfo.Size())
         if err != nil {
           IndexerMaybeError("trying to insert new file into fileInfo", err)
-          searchDB.Rollback()
+          transaction.Rollback()
           return nil
         }
-        err = searchDB.Exec(`
+        _, err = transaction.Exec(`
           insert into pageSearch ( filePath, fileTitle, fileStr ) values ( ?, ?, ?)
         `, path, fileTitle, fileStr)
         if err != nil {
           IndexerMaybeError("trying to insert new file into pageSearch", err)
-          searchDB.Rollback()
+          transaction.Rollback()
           return nil
         }
-        err = searchDB.Commit()
+        err = transaction.Commit()
         if err != nil {
           IndexerMaybeError("could not commit insertions transaction", err)
           return nil
@@ -270,28 +275,28 @@ func lookForNewFiles(searchDB *sqlite3.Conn) {
       // this file has already been indexed... so update it...
       //
       IndexerLogf("UPDATING: [%s][%s]", path, fileTitle)
-      err = searchDB.Begin()
+      transaction, err := searchDB.Begin()
       if err != nil {
         IndexerMaybeError("could not start update transaction", err)
         return nil
       }
-      err = searchDB.Exec(`
+      _, err = transaction.Exec(`
         update fileInfo set fileMTime = ?, fileSize = ? where filePath = ?
       `, fileInfo.ModTime().Unix(), fileInfo.Size(), path)
       if err != nil {
         IndexerMaybeError("trying to update changed file into fileInfo", err)
-        searchDB.Rollback()
+        transaction.Rollback()
         return nil
       }
-      err = searchDB.Exec(`
+      _, err = transaction.Exec(`
         update pageSearch set fileTitle = ?, fileStr = ? where filePath = ?
       `, fileTitle, fileStr, path)
       if err != nil {
         IndexerMaybeError("trying to update changed file into pageSearch", err)
-        searchDB.Rollback()
+        transaction.Rollback()
         return nil
       }
-      err = searchDB.Commit()
+      err = transaction.Commit()
       if err != nil {
         IndexerMaybeError("could not commit update transaction", err)
         return nil
@@ -307,7 +312,7 @@ func indexFiles() {
   //
   // Begin by opening the database
   //
-  searchDB, err := sqlite3.Open(getConfigStr("DatabasePath", ""))
+  searchDB, err := sql.Open("sqlite3", getConfigStr("DatabasePath", ""))
   IndexerMaybeFatal("could not open database", err)
   defer searchDB.Close()
   //
