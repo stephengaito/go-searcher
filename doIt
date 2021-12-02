@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# This bash script builds, runs and tests podman images and containers for
+# running go-searcher
+
+removeContainer () {
+  if podman container exists go-searcher-test ; then
+    podman container rm go-searcher-test
+  fi
+}
+
+removeImage () {
+  removeContainer
+  if podman image exists go-searcher-test ; then
+    podman image rm go-searcher-test
+  fi
+}
+
+buildImage () {
+  if ! podman image exists go-searcher-test ; then
+    podman build . --tag go-searcher-test
+  fi
+}
+
+runContainer () {
+  buildImage
+	podman run                                    \
+	  --volume $(pwd)/config:/searcher/config     \
+	  --volume $(pwd)/files:/searcher/files       \
+	  --publish 9090:8080 --name go-searcher-test \
+	  go-searcher-test
+}
+
+testContainer () {
+  echo ""
+  echo "-------------------------------------------------------------------"
+  echo ""
+  echo "Should contain a 'search-result-link'"
+  echo ""
+  wget --post-data 'searchQueryStr=actively&searchQueryNum=10' -O - http://localhost:9090/ | grep Quantum
+  echo ""
+  echo "-------------------------------------------------------------------"
+  echo ""
+  echo "Should NOT contain a 'search-result-link'"
+  echo ""
+  wget --post-data 'searchQueryStr=notAWord&searchQueryNum=10' -O - http://localhost:9090/ | grep Quantum
+  echo ""
+  echo "-------------------------------------------------------------------"
+  echo ""
+
+}
+
+help () {
+	echo "usage: doIt <command>"
+	echo ""
+	echo "remove  removes the go-searcher-test image"
+	echo "build   builds the go-searcher-test image if it does not already exist"
+	echo "run     runs a container using an existing go-searcher-test image"
+	echo "test    runs and test a go-searcher-test based container"
+}
+
+if test $# -ne 1 ; then
+  echo "usage: doIt <command>"
+  exit 1
+fi
+
+if test $1 = "remove" ; then
+  removeImage
+elif test $1 = "build" ; then
+  buildImage
+elif test $1 = "run" ; then
+  runContainer
+elif test $1 = "test" ; then
+  testContainer
+elif test $1 = "help" ; then
+  help
+else
+  echo "unrecognized command"
+  echo ""
+  help
+  exit 1
+fi

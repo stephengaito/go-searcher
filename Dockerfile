@@ -1,31 +1,22 @@
 # Build step....
 #
 FROM golang:alpine AS build
-RUN apk add --no-cache --update bash make git curl gcc sqlite musl-dev icu-dev
+RUN apk add --no-cache --update bash make git curl gcc sqlite-dev musl-dev icu-dev
 
-RUN export CGO_ENABLED=1
-COPY . /go/searcher
-WORKDIR /go/searcher
-RUN go get
-RUN go build
+COPY . /searcher
+WORKDIR /searcher/searcher
+RUN go get --tags "icu fts5" && go build --tags "icu fts5"
 
 # Final image...
 #
 FROM alpine
-RUN apk add --no-cache --update ca-certificates sqlite
+RUN apk add --no-cache --update sqlite-libs icu-libs icu-data
 
-RUN mkdir -p /searcher/config
-RUN mkdir -p /searcher/files
-RUN mkdir -p /searcher/data
+RUN mkdir -p /searcher/config /searcher/files /searcher/data
 
-COPY --from=build /go/searcher/go-searcher            /searcher
-COPY --from=build /go/searcher/config/searchForm.html /searcher/config
+COPY --from=build /searcher/searcher/searcher /searcher
 
 EXPOSE 8080
 WORKDIR /searcher
 
-# NOTE: if there are problems starting swap the comments on the next two
-# lines to allow you to view the searcher logfiles from the host...
-#
-#ENTRYPOINT ["/searcher/go-searcher", "-l", "/searcher/data/searcher.log"]
-ENTRYPOINT ["/searcher/go-searcher", "-l", "/tmp/searcher.log"]
+ENTRYPOINT ["/searcher/searcher", "-c", "/searcher/config/searcher.jsonc"]

@@ -1,4 +1,4 @@
-module github.com/stephengaito/go-searcher
+module github.com/stephengaito/go-searcher/searcher
 
 go 1.17
 
