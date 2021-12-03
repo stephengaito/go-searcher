@@ -159,7 +159,9 @@ func removeMissingFiles(searchDB *sql.DB) {
 func lookForNewFiles(searchDB *sql.DB) {
   maxInsertions := getConfigInt("Indexer.AddUpdateBatch", 200)
   numInsertions := int64(0)
-  titleRegexp   := regexp.MustCompile(`<meta name="pageTitle" content="(.*?)">`)
+  titlePattern  := getConfigStr("TitlePattern", "<title>(.*?)</title>")
+  IndexerLogf("TitlePattern: [%s]", titlePattern)
+  titleRegexp   := regexp.MustCompile(titlePattern)
 
   IndexerLog("looking for new or chagned files")
   //
@@ -214,7 +216,7 @@ func lookForNewFiles(searchDB *sql.DB) {
       fileTitleMatches := titleRegexp.FindStringSubmatch(fileStr)
       // The following is a dirty hack to protect us from missing titles ;-(
       fileTitle        := path
-      //IndexerLogf("titleMatches [%s]", fileTitleMatches)
+      IndexerLogf("titleMatches [%s]", fileTitleMatches)
       if 0 < len(fileTitleMatches) {
         fileTitle = string(fileTitleMatches[1])
       }

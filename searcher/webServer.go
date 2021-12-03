@@ -47,10 +47,27 @@ type SearchData struct {
   Results     []SearchResults
 }
 
-func runWebServer() {
+func runWebServer(cliHost string, cliPort int64) {
 
   htmlDirs := getConfigAStr("HtmlDirs", []string{ "files" })
   urlBase  := getConfigStr("UrlBase", "")
+  host     := getConfigStr("Host", "")
+  if cliHost == "" {
+    if host == "" {
+  		host = "0.0.0.0"
+  	}
+  } else {
+  	host = cliHost
+  }
+  portInt     := getConfigInt("Port", 0)
+ 	if cliPort == 0 {
+    if portInt == 0 {
+  		portInt = 9090
+  	}
+  } else {
+  	portInt = cliPort
+  }
+  port := strconv.FormatInt(portInt, 10)
 
   searchForm := CreateTemplate(
     getConfigStr("Webserver.SearchForm", "config/searchForm.html"),
@@ -138,5 +155,6 @@ func runWebServer() {
     WebserverMaybeError("could not execute searchForm", err)
   })
 
-  http.ListenAndServe(":8080", nil)
+  WebserverLogf("listening to %s:%s", host, port)
+  http.ListenAndServe(host+":"+port, nil)
 }

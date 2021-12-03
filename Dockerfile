@@ -16,7 +16,6 @@ RUN mkdir -p /searcher/config /searcher/files /searcher/data
 
 COPY --from=build /searcher/searcher/searcher /searcher
 
-EXPOSE 8080
 WORKDIR /searcher
 
 ENTRYPOINT ["/searcher/searcher", "-c", "/searcher/config/searcher.jsonc"]

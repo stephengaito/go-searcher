@@ -17,6 +17,7 @@ removeImage () {
 }
 
 buildImage () {
+  rm -rf searcher/searcher
   if ! podman image exists go-searcher-test ; then
     podman build . --tag go-searcher-test
   fi
@@ -24,11 +25,13 @@ buildImage () {
 
 runContainer () {
   buildImage
-	podman run                                    \
-	  --volume $(pwd)/config:/searcher/config     \
-	  --volume $(pwd)/files:/searcher/files       \
-	  --publish 9090:8080 --name go-searcher-test \
-	  go-searcher-test
+  rm -rf data/searcher.db
+  podman run -it                            \
+    --volume $(pwd)/config:/searcher/config \
+    --volume $(pwd)/files:/searcher/files   \
+    --publish 127.0.0.1:9090:9090           \
+    --name go-searcher-test                 \
+    go-searcher-test -p 9090
 }
 
 testContainer () {

@@ -153,6 +153,7 @@ func getConfigStr(configVarPath string, aDefault string) string {
   gValue := getConfigVar(configVarPath)
   theValue := aDefault
   if gValue.Exists() { theValue = gValue.String()  }
+  //log.Printf("getConfigStr[%s] = [%s]", configVarPath, theValue)
   return theValue
 }
 

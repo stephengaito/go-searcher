@@ -10,6 +10,15 @@
   // we need to specify where to remap the file to url
   "UrlBase": ""
 
+  // we need to specify how to find the title in an indexed document
+  // using a regular expression...
+  "TitlePattern" : "<title>(.*?)</title>"
+
+  // we need to specify the interface on which the webServer listens
+  "Host" : "0.0.0.0"
+  // we need to specify the port on which the webServer listens
+  "Port" : 8080
+
   // We specify how the indexer will work...
   "Indexer": {
     // we need to specify the indexer sleep time (in seconds)

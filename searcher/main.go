@@ -14,6 +14,12 @@ func main() {
   configFilePath := flag.String(
     "c", "/searcher/config/searcher.jsonc", "The searcher configuration file",
   )
+  webServerHost := flag.String(
+  	"H", "", "The interface on which the webServer will listen",
+  )
+  webServerPort := flag.Int(
+  	"p", 0, "The port on which the webServer will listen",
+  )
   logFilePath := flag.String(
     "l", "stderr", "The searcher log file path",
   )
@@ -47,7 +53,7 @@ func main() {
   // ensure the database exists and has the structure we require
   initDatabaseStructure()
 
-  go runWebServer()
+  go runWebServer(*webServerHost, int64(*webServerPort))
 
   indexFiles()
 
