@@ -1,11 +1,15 @@
 # Build step....
 #
 FROM golang:alpine AS build
-RUN apk add --no-cache --update bash make git curl gcc sqlite-dev musl-dev icu-dev
+RUN apk add --no-cache --update \
+  bash make git curl gcc \
+  sqlite-dev musl-dev icu-dev
 
 COPY . /searcher
 WORKDIR /searcher/searcher
-RUN go get --tags "icu fts5" && go build --tags "icu fts5"
+RUN go get --tags "icu fts5" && \
+  go install --tags "icu fts5" && \
+  go build --tags "icu fts5"
 
 # Final image...
 #
