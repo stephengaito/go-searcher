@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/grokify/html-strip-tags-go v0.0.1
-	github.com/mattn/go-sqlite3 v1.14.9
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/tidwall/gjson v1.12.0
 	github.com/tidwall/sjson v1.2.3
 )
