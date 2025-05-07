@@ -1,6 +1,6 @@
 # Build step....
 #
-FROM golang:alpine AS build
+FROM docker.io/library/golang:alpine AS build
 RUN apk add --no-cache --update \
   bash make git curl gcc \
   sqlite-dev musl-dev icu-dev
@@ -13,7 +13,7 @@ RUN go get --tags "icu fts5" && \
 
 # Final image...
 #
-FROM alpine
+FROM docker.io/library/alpine
 RUN apk add --no-cache --update sqlite-libs icu-libs icu-data
 
 RUN mkdir -p /searcher/config /searcher/files /searcher/data
